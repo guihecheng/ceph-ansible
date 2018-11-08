@@ -28,10 +28,12 @@
   changed_when: false
   check_mode: no
   register: ceph_docker_version
+  when: not is_podman
 
 - name: set_fact ceph_docker_version ceph_docker_version.stdout.split
   set_fact:
     ceph_docker_version: "{{ ceph_docker_version.stdout.split(' ')[2] }}"
+  when: not is_podman
 
 # Only include 'checks.yml' when :
 # we are deploying containers without kv AND host is either a mon OR a nfs OR an osd,
@@ -40,7 +42,7 @@
 # AND
 # we are not playing rolling-update.yml playbook.
 - name: check if a cluster is already running
-  command: "docker ps -q --filter='name=ceph-mon-{{ ansible_hostname }}'"
+  command: "{{ container_binary }} ps -q --filter='name=ceph-mon-{{ ansible_hostname }}'"
   register: ceph_health
   changed_when: false
   failed_when: false
@@ -83,8 +85,11 @@
 
 - name: get ceph version
   command: >
-    docker run --rm --entrypoint /usr/bin/ceph
-    {{ ceph_client_docker_registry }}/{{ ceph_client_docker_image }}:{{ ceph_client_docker_image_tag }}
+    {{ container_binary }}
+    run
+    --rm
+    --entrypoint /usr/bin/ceph
+    {{ ceph_client_docker_registry}}/{{ ceph_client_docker_image }}:{{ ceph_client_docker_image_tag }}
     --version
   changed_when: false
   check_mode: no

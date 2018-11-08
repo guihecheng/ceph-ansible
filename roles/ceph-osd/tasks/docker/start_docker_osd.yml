@@ -11,14 +11,14 @@
     - ceph_docker_on_openstack
 
 - name: test if the container image has the disk_list function
-  command: docker run --rm --entrypoint=stat {{ ceph_docker_registry }}/{{ ceph_docker_image }}:{{ ceph_docker_image_tag }} disk_list.sh
+  command: "{{ container_binary }} run --rm --entrypoint=stat {{ ceph_docker_registry }}/{{ ceph_docker_image }}:{{ ceph_docker_image_tag }} disk_list.sh"
   changed_when: false
   failed_when: false
   register: disk_list
   when:
     - osd_scenario != 'lvm'
 
-- name: generate ceph osd docker run script
+- name: generate ceph osd container run script
   become: true
   template:
     src: "{{ role_path }}/templates/ceph-osd-run.sh.j2"
@@ -42,7 +42,7 @@
 
 - name: collect osd ids
   shell: >
-    docker run --rm
+    {{ container_binary }} run --rm
     --privileged=true
     -v /run/lvm/lvmetad.socket:/run/lvm/lvmetad.socket
     -v /etc/ceph:/etc/ceph:z
