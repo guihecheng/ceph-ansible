@@ -156,6 +156,15 @@ filestore xattr use omap = true
 {% if inventory_hostname in groups.get(rgw_group_name, []) %}
 {% for host in groups[rgw_group_name] %}
 {# {{ hostvars[host]['rgw_hostname'] }} for backward compatibility, fqdn issues. See bz1580408 #}
+{% if hostvars[host]['rgw_instances'] is defined %}
+{% for instance in hostvars[host]['rgw_instances'] %}
+[client.rgw.{{ hostvars[host]['rgw_hostname'] + '.' + instance['instance_name'] }}]
+host = {{ hostvars[host]['rgw_hostname'] }}
+keyring = /var/lib/ceph/radosgw/{{ cluster }}-rgw.{{ hostvars[host]['rgw_hostname'] + '.' + instance['instance_name'] }}/keyring
+log file = /var/log/ceph/{{ cluster }}-rgw-{{ hostvars[host]['ansible_hostname'] + '.' + instance['instance_name'] }}.log
+rgw frontends = {{ radosgw_frontend_type }} {{ 'port' if radosgw_frontend_type == 'civetweb' else 'endpoint' }}={{ instance['radosgw_address'] }}:{{ instance['radosgw_frontend_port'] }} {{ radosgw_frontend_options }}
+{% endfor %}
+{% else %}
 [client.rgw.{{ hostvars[host]['rgw_hostname'] }}]
 host = {{ hostvars[host]['rgw_hostname'] }}
 keyring = /var/lib/ceph/radosgw/{{ cluster }}-rgw.{{ hostvars[host]['rgw_hostname'] }}/keyring
@@ -198,6 +207,7 @@ rgw frontends = {{ radosgw_frontend_type }} {{ 'port' if radosgw_frontend_type =
     {% elif ip_version == 'ipv6' %}
 rgw frontends = {{ radosgw_frontend_type }} {{ 'port' if radosgw_frontend_type == 'civetweb' else 'endpoint' }}=[{{ hostvars[host][interface][ip_version][0]['address'] }}]:{{ radosgw_frontend_port }} {{ radosgw_frontend_options }}
     {% endif %}
+{% endif %}
 {% endif %}
 {% endfor %}
 {% endif %}

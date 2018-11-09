@@ -15,8 +15,19 @@
   when:
     - ceph_rgw_systemd_overrides is defined
 
-- name: start rgw
+- name: start rgw single instance
   service:
     name: ceph-radosgw@rgw.{{ ansible_hostname }}
     state: started
     enabled: yes
+  when:
+    - rgw_instances is undefined
+
+- name: start rgw multiple instance
+  service:
+    name: ceph-radosgw@rgw.{{ ansible_hostname }}.{{ item.instance_name }}
+    state: started
+    enabled: yes
+  with_items: "{{ rgw_instances }}"
+  when:
+    - rgw_instances is defined

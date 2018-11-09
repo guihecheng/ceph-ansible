@@ -1,15 +1,40 @@
 ---
-- name: create rados gateway keyring
+- name: create rados gateway single instance keyring
   command: ceph --cluster {{ cluster }} --name client.bootstrap-rgw --keyring /var/lib/ceph/bootstrap-rgw/{{ cluster }}.keyring auth get-or-create client.rgw.{{ ansible_hostname }} osd 'allow rwx' mon 'allow rw' -o /var/lib/ceph/radosgw/{{ cluster }}-rgw.{{ ansible_hostname }}/keyring
   args:
     creates: /var/lib/ceph/radosgw/{{ cluster }}-rgw.{{ ansible_hostname }}/keyring
   changed_when: false
-  when: cephx
+  when:
+    - cephx
+    - rgw_instances is undefined
 
-- name: set rados gateway key permissions
+- name: set rados gateway single instance key permissions
   file:
     path: /var/lib/ceph/radosgw/{{ cluster }}-rgw.{{ ansible_hostname }}/keyring
     owner: "ceph"
     group: "ceph"
     mode: "0600"
-  when: cephx
+  when:
+    - cephx
+    - rgw_instances is undefined
+
+- name: create rados gateway multiple instance keyring
+  command: ceph --cluster {{ cluster }} --name client.bootstrap-rgw --keyring /var/lib/ceph/bootstrap-rgw/{{ cluster }}.keyring auth get-or-create client.rgw.{{ ansible_hostname }}.{{ item.instance_name }} osd 'allow rwx' mon 'allow rw' -o /var/lib/ceph/radosgw/{{ cluster }}-rgw.{{ ansible_hostname }}.{{ item.instance_name }}/keyring
+  args:
+    creates: /var/lib/ceph/radosgw/{{ cluster }}-rgw.{{ ansible_hostname }}.{{ item.instance_name }}/keyring
+  changed_when: false
+  with_items: "{{ rgw_instances }}"
+  when:
+    - cephx
+    - rgw_instances is defined
+
+- name: set rados gateway multiple instance key permissions
+  file:
+    path: /var/lib/ceph/radosgw/{{ cluster }}-rgw.{{ ansible_hostname }}.{{ item.instance_name }}/keyring
+    owner: "ceph"
+    group: "ceph"
+    mode: "0600"
+  with_items: "{{ rgw_instances }}"
+  when:
+    - cephx
+    - rgw_instances is defined

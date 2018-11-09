@@ -13,6 +13,16 @@ dummy:
 # GENERAL #
 ###########
 
+# Multiple instances on a single host
+#rgw_instances:
+#  - instance_name: "rgw1"
+#    radosgw_address: "0.0.0.0"
+#    radosgw_frontend_port: "8081"
+#  
+#  - instance_name: "rgw2"
+#    radosgw_address: "0.0.0.0"
+#    radosgw_frontend_port: "8082"
+
 # Even though RGW nodes should not have the admin key
 # at their disposal, some people might want to have it
 # distributed on RGW nodes. Setting 'copy_admin_key' to 'true'
