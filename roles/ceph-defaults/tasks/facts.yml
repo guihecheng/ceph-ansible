@@ -254,5 +254,10 @@
 - name: import_tasks set_radosgw_address.yml
   import_tasks: set_radosgw_address.yml
 
+- name: set_fact rgw_instances
+  set_fact:
+    rgw_instances: "{{ (rgw_instances|default([]) + [ {'instance_name': 'rgw' + item, 'radosgw_address': _radosgw_address, 'radosgw_frontend_port': radosgw_frontend_port|int + item|int } ]) | unique }}"
+  with_sequence: start=0 end={{ radosgw_instances|int - 1 }}
+
 - name: populate service facts
   service_facts:
