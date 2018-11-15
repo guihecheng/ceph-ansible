@@ -1,0 +1,6 @@
+---
+- name: start lvs
+  service:
+    name: lvs_realserver
+    state: started
+    enabled: yes

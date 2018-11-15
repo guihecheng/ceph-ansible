@@ -1,0 +1,75 @@
+#!/bin/sh
+# {{ ansible_managed }}
+
+VIPS=({{ lvs_vips_str }})
+mkdir -p /var/log/ceph/
+LOGFILE='/var/log/ceph/lvs.log'
+RETVAL=0
+{% raw %}
+LENGTH_VIP=${#VIPS[*]}
+{% endraw %}
+
+function startlvs() {
+    for ((i=0;i<$LENGTH_VIP;i++)); do
+        /sbin/ifconfig lo:$i ${VIPS[i]} netmask 255.255.255.255 broadcast ${VIPS[i]} up
+        /sbin/route add -host ${VIPS[i]} dev lo:$i
+    done
+    echo "1" >/proc/sys/net/ipv4/conf/lo/arp_ignore
+    echo "2" >/proc/sys/net/ipv4/conf/lo/arp_announce
+    echo "1" >/proc/sys/net/ipv4/conf/all/arp_ignore
+    echo "2" >/proc/sys/net/ipv4/conf/all/arp_announce
+    sysctl -p >/dev/null 2>&1
+}
+function stoplvs() {
+    for ((i=0;i<$LENGTH_VIP;i++)); do
+        /sbin/ifconfig lo:$i down
+        /sbin/route del ${VIPS[i]} >/dev/null 2>&1
+    done
+    echo "0" >/proc/sys/net/ipv4/conf/lo/arp_ignore
+    echo "0" >/proc/sys/net/ipv4/conf/lo/arp_announce
+    echo "0" >/proc/sys/net/ipv4/conf/all/arp_ignore
+    echo "0" >/proc/sys/net/ipv4/conf/all/arp_announce
+}
+
+. /etc/rc.d/init.d/functions
+case "$1" in
+start)
+       startlvs $VIPS
+       for((i=0;i<$LENGTH_VIP;i++))
+       do
+           IPADDR=${VIPS[i]}
+           RETVAL=`ip a | grep "$IPADDR scope global lo:" | wc -l`
+           if [ $RETVAL -eq 1 ];
+           then
+               echo "`date` RealServer $IPADDR Start OK" >> $LOGFILE
+           else
+               echo "`date` RealServer $IPADDR Start failed" >> $LOGFILE
+               startlvs $VIPS
+           fi
+       done
+       ;;
+stop)
+       stoplvs $VIPS
+       for((i=0;i<$LENGTH_VIP;i++))
+       do
+           IPADDR=${VIPS[i]}
+           RETVAL=`ip a | grep "$IPADDR scope global lo:" | wc -l`
+           if [ $RETVAL -eq 1 ];
+           then
+               echo "`date` RealServer $IPADDR Stop failed" >> $LOGFILE
+               stoplvs $VIPS
+           else
+               echo "`date` RealServer $IPADDR Stoped" >> $LOGFILE
+           fi
+       done
+       ;;
+restart)
+       stoplvs $VIPS
+       sleep 1
+       startlvs $VIPS
+       ;;
+*)
+       echo "Usage: $0 {start|stop|restart}"
+       exit 1
+esac
+exit 0

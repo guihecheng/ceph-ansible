@@ -1,0 +1,17 @@
+---
+- hosts: lvss
+  become: True
+  gather_facts: False
+  roles:
+    - ceph-lvs
+
+#- hosts: haproxys
+#  become: Tree
+#  roles:
+#    - ceph-haproxy
+
+- hosts: keepaliveds
+  become: True
+  gather_facts: False
+  roles:
+    - ceph-keepalived

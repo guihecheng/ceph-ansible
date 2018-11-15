@@ -1,0 +1,14 @@
+[Unit]
+Description=lvs-rgw
+After=multi-user.target
+
+[Service]
+Type=oneshot
+ExecStart= /etc/init.d/lvs_realserver.sh start
+ExecStop= /etc/init.d/lvs_realserver.sh stop
+ExecReload= /etc/init.d/lvs_realserver.sh restart
+TimeoutSec=0
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
