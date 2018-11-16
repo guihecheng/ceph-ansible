@@ -1,0 +1,7 @@
+---
+
+keepalived_group_name: keepaliveds
+
+keepalived_vrrp_instances: []
+
+keepalived_virtual_server_groups: []

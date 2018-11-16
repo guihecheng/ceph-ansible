@@ -1,7 +1,6 @@
 ---
 - hosts: lvss
   become: True
-  gather_facts: False
   roles:
     - ceph-lvs
 
@@ -12,6 +11,5 @@
 
 - hosts: keepaliveds
   become: True
-  gather_facts: False
   roles:
     - ceph-keepalived

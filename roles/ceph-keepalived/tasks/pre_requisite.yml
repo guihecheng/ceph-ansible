@@ -1,0 +1,40 @@
+- name: install keepalived
+  package:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - keepalived
+  when:
+    - ansible_os_family == 'RedHat'
+
+- name: init base keepalived.conf
+  become: true
+  template:
+    src: "{{ role_path }}/templates/keepalived.conf.j2"
+    dest: "/etc/keepalived/keepalived.conf"
+    owner: "root"
+    group: "root"
+    mode: "0644"
+
+- name: export keepalived_vrrp_instances to file
+  copy:
+    content: "{{ keepalived_vrrp_instances }}"
+    dest: /tmp/vrrp_instances
+
+- name: export keepalived_virtual_server_groups to file
+  copy:
+    content: "{{ keepalived_virtual_server_groups }}"
+    dest: /tmp/virtual_server_groups
+
+- name: generate config script
+  become: true
+  template:
+    src: "{{ role_path }}/templates/keepalived_config.py.j2"
+    dest: "/etc/keepalived/keepalived_config.py"
+    owner: "root"
+    group: "root"
+    mode: "0744"
+
+- name: generate keepalived.conf by config script
+  become: true
+  command: "python /etc/keepalived/keepalived_config.py"

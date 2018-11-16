@@ -1,0 +1,6 @@
+---
+- name: include pre_requisite.yml
+  include: pre_requisite.yml
+
+- name: include start_keepalived.yml
+  include: start_keepalived.yml

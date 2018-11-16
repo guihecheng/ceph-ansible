@@ -1,0 +1,122 @@
+#!/usr/bin/env python
+# {{ ansible_managed }}
+
+import json
+import socket
+
+config_file = "/etc/keepalived/keepalived.conf"
+instance_file = "/tmp/vrrp_instances"
+vservers_file = "/tmp/virtual_server_groups"
+
+vrrp_instances = []
+virtual_server_groups = []
+
+with open(instance_file) as f:
+    vrrp_instances = json.load(f)
+
+with open(vservers_file) as f:
+    virtual_server_groups = json.load(f)
+
+myip = socket.gethostbyname(socket.gethostname())
+myinstances = []
+mygroups = []
+
+def append_conf_block(fhandle, conf_block):
+    for line in conf_block:
+        fhandle.write(line + "\n")
+    fhandle.write("\n")
+
+def config_vrrp_instance(fhandle, seq, vip, netmask, dev, router_id, is_master):
+    conf_block = ["vrrp_instance VI_" + str(seq) + "{",
+                  "    state " + ("MASTER" if is_master else "BACKUP"),
+                  "    interface " + dev,
+                  "    virtual_router_id " + router_id,
+                  "    priority " + ("100" if is_master else "90"),
+                  "    advert_int 1",
+                  "    authentication {",
+                  "        auth_type PASS",
+                  "        auth_pass 1111",
+                  "    }",
+                  "    virtual_ipaddress {",
+                  "        " + vip + "/" + netmask + " dev " + dev,
+                  "    }",
+                  "}"
+    ]
+    append_conf_block(fhandle, conf_block)
+
+def config_virtual_server_group(fhandle, seq, virtual_servers):
+    conf_block = ["virtual_server_group RGW_BUSINESS_INTERNET" + str(seq) + " {"]
+    for vserver in virtual_servers:
+        conf_block.append("    " + vserver['vip'] + " " + vserver['port'])
+    conf_block.append("}")
+    append_conf_block(fhandle, conf_block)
+
+def config_real_server(fhandle, ip, port):
+    conf_block = ["    real_server " + ip + " " + port + " {",
+                  "        weight 1",
+                  "        TCP_CHECK {",
+                  "            connect_timeout 1",
+                  "            nb_get_retry 1",
+                  "            delay_before_retry 3",
+                  "            connect_port " + port,
+                  "        }",
+                  "    }"
+    ]
+    append_conf_block(fhandle, conf_block)
+
+def config_virtual_server(fhandle, seq, real_servers):
+    conf_block = ["virtual_server group RGW_BUSINESS_INTERNET" + str(seq) + " {",
+                  "    delay_loop 6",
+                  "    lb_algo rr",
+                  "    lb_kind DR",
+                  "    persistence_timeout 10",
+                  "    protocol TCP",
+    ]
+
+    append_conf_block(fhandle, conf_block)
+
+    for rserver in real_servers:
+        config_real_server(fhandle, rserver['ip'], rserver['port'])
+
+    conf_block = ["}"]
+    append_conf_block(fhandle, conf_block)
+
+
+def main():
+    global myinstances, mygroups
+    for inst in vrrp_instances:
+        if inst['master'] == myip or inst['backup'] == myip:
+            myinstances.append(inst)
+    
+    for group in virtual_server_groups:
+        match = False
+        for vserver in group['virtual_servers']:
+            for inst in myinstances:
+                if vserver['vip'] == inst['vip']:
+                    match = True
+                    break
+            if match:
+                break
+        if match:
+            mygroups.append(group)
+
+    if len(myinstances) == 0 and len(mygroups) == 0:
+        return
+
+    fhandle = open(config_file, 'a+')
+
+    seq = 1
+    for inst in myinstances:
+        config_vrrp_instance(fhandle, seq, inst['vip'], inst['netmask'], inst['dev'], inst['router_id'], inst['master'] == myip)
+        seq += 1
+
+    seq = 1
+    for group in mygroups:
+        config_virtual_server_group(fhandle, seq, group['virtual_servers'])
+        config_virtual_server(fhandle, seq, group['real_servers'])
+        seq += 1
+
+    fhandle.close()
+
+if __name__ == '__main__':
+    main()
