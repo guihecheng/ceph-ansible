@@ -1,0 +1,6 @@
+---
+haproxy_group_name: haproxys
+
+haproxy_backends: []
+
+haproxy_frontends: []

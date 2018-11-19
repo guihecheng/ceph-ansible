@@ -1,0 +1,6 @@
+---
+- name: include pre_requisite.yml
+  include: pre_requisite.yml
+
+- name: include start_haproxy.yml
+  include: start_haproxy.yml

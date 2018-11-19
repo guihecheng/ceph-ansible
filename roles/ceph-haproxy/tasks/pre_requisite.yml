@@ -1,0 +1,40 @@
+- name: install haproxy
+  package:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - haproxy
+  when:
+    - ansible_os_family == 'RedHat'
+
+- name: init base haproxy.cfg
+  become: true
+  template:
+    src: "{{ role_path }}/templates/haproxy.cfg.j2"
+    dest: "/etc/haproxy/haproxy.cfg"
+    owner: "root"
+    group: "root"
+    mode: "0644"
+
+- name: export haproxy_frontends to file
+  copy:
+    content: "{{ haproxy_frontends }}"
+    dest: /tmp/haproxy_frontends
+
+- name: export haproxy_backends to file
+  copy:
+    content: "{{ haproxy_backends }}"
+    dest: /tmp/haproxy_backends
+
+- name: generate config script
+  become: true
+  template:
+    src: "{{ role_path }}/templates/haproxy_config.py.j2"
+    dest: "/etc/haproxy/haproxy_config.py"
+    owner: "root"
+    group: "root"
+    mode: "0744"
+
+- name: generate haproxy.cfg by config script
+  become: true
+  command: "python /etc/haproxy/haproxy_config.py"

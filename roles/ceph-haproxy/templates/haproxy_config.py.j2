@@ -1,0 +1,71 @@
+#!/usr/bin/env python
+# {{ ansible_managed }}
+
+import json
+import socket
+
+config_file = "/etc/haproxy/haproxy.cfg"
+frontend_file = "/tmp/haproxy_frontends"
+backend_file = "/tmp/haproxy_backends"
+
+haproxy_frontends = []
+haproxy_backends = []
+
+with open(frontend_file) as f:
+    haproxy_frontends = json.load(f)
+
+with open(backend_file) as f:
+    haproxy_backends = json.load(f)
+
+myip = socket.gethostbyname(socket.gethostname())
+myfrontends = []
+mybackends = []
+
+def append_conf_block(fhandle, conf_block):
+    fhandle.write("\n")
+    for line in conf_block:
+        fhandle.write(line + "\n")
+
+def config_frontend(fhandle, frontend_name, port, backend_name):
+    conf_block = ["frontend " + frontend_name,
+                  "    bind " + "*" + ":" + port,
+                  "    default_backend " + backend_name
+    ]
+    append_conf_block(fhandle, conf_block)
+
+def config_backend(fhandle, name, servers):
+    conf_block = ["backend " + name,
+                  "    mode http",
+                  "    option forwardfor",
+                  "    balance static-rr",
+                  "    option httpchk Get /"
+    ]
+    for server in servers:
+        conf_block.append("    server " + server['name'] + " " + server['ip'] + ":" + server['port'] + " weight " + server['weight'])
+    append_conf_block(fhandle, conf_block)
+
+def main():
+    global myfrontends, mybackends
+    for frontend in haproxy_frontends:
+        if frontend['assign_to'] == myip:
+            myfrontends.append(frontend)
+    
+    for backend in haproxy_backends:
+        if backend['assign_to'] == myip:
+            mybackends.append(backend)
+
+    if len(myfrontends) == 0 and len(mybackends) == 0:
+        return
+
+    fhandle = open(config_file, 'a+')
+
+    for frontend in myfrontends:
+        config_frontend(fhandle, frontend['name'], frontend['port'], frontend['backend'])
+
+    for backend in mybackends:
+        config_backend(fhandle, backend['name'], backend['servers'])
+
+    fhandle.close()
+
+if __name__ == '__main__':
+    main()
