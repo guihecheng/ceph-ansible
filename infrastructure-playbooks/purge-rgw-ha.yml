@@ -1,0 +1,152 @@
+---
+# This playbook purges Keepalived, LVS, HAProxy
+# It removes: packages, configuration files and ALL THE DATA
+#
+# Use it like this:
+# ansible-playbook purge-rgw-ha.yml
+#     Prompts for confirmation to purge, defaults to no and
+#     doesn't purge the cluster. yes purges the HA stuff.
+#
+# ansible-playbook -e ireallymeanit=yes|no purge-rgw-ha.yml
+#     Overrides the prompt using -e option. Can be used in
+#     automation scripts to avoid interactive prompt.
+
+- name: confirm whether user really meant to purge the HA stuff
+  hosts: localhost
+  gather_facts: false
+
+  vars_prompt:
+    - name: ireallymeanit
+      prompt: Are you sure you want to purge the cluster?
+      default: 'no'
+      private: no
+
+  tasks:
+  - name: exit playbook, if user did not mean to purge HA
+    fail:
+      msg: >
+        "Exiting purge-rgw-ha playbook, HA stuff was NOT purged.
+         To purge the HA stuff, either say 'yes' on the prompt or
+         or use `-e ireallymeanit=yes` on the command line when
+         invoking the playbook"
+    when: ireallymeanit != 'yes'
+
+- name: gather facts on all hosts
+
+  hosts:
+    - "{{ lvs_group_name|default('lvss') }}"
+    - "{{ keepalived_group_name|default('keepaliveds') }}"
+    - "{{ haproxy_group_name|default('haproxys') }}"
+
+  become: true
+
+  tasks:
+    - debug: msg="gather facts on all HA hosts for following reference"
+
+- name: purge keepalived
+
+  vars:
+    keepalived_group_name: keepaliveds
+
+  hosts:
+    - "{{ keepalived_group_name|default('keepaliveds') }}"
+
+  gather_facts: false # Already gathered previously
+
+  become: true
+
+  tasks:
+
+  - name: stop keepalived with systemd
+    service:
+      name: keepalived
+      state: stopped
+      enabled: no
+    failed_when: false
+    when: ansible_service_mgr == 'systemd'
+
+  - name: remove config files
+    file:
+      path: "{{ item }}"
+      state: absent
+    with_items:
+      - /etc/keepalived/keepalived.conf
+      - /etc/keepalived/keepalived_config.py
+
+  - name: uninstall packages
+    yum:
+      name: keepalived
+      state: absent
+    when: ansible_pkg_mgr == 'yum'
+
+- name: purge lvs
+
+  vars:
+    lvs_group_name: lvss
+
+  hosts:
+    - "{{ lvs_group_name|default('lvss') }}"
+
+  gather_facts: false # Already gathered previously
+
+  become: true
+
+  tasks:
+
+  - name: stop lvs with systemd
+    service:
+      name: lvs_realserver
+      state: stopped
+      enabled: no
+    failed_when: false
+    when: ansible_service_mgr == 'systemd'
+
+  - name: remove config files
+    file:
+      path: "{{ item }}"
+      state: absent
+    with_items:
+      - /etc/init.d/lvs_realserver.sh
+      - /etc/systemd/system/lvs_realserver.service
+
+  - name: uninstall packages
+    yum:
+      name: ipvsadm
+      state: absent
+    when: ansible_pkg_mgr == 'yum'
+
+- name: purge haproxy
+
+  vars:
+    haproxy_group_name: haproxys
+
+  hosts:
+    - "{{ haproxy_group_name|default('haproxys') }}"
+
+  gather_facts: false # Already gathered previously
+
+  become: true
+
+  tasks:
+
+  - name: stop haproxy with systemd
+    service:
+      name: haproxy
+      state: stopped
+      enabled: no
+    failed_when: false
+    when: ansible_service_mgr == 'systemd'
+
+  - name: remove config files
+    file:
+      path: "{{ item }}"
+      state: absent
+    with_items:
+      - /etc/haproxy/haproxy.cfg
+      - /etc/haproxy/haproxy_config.py
+
+  - name: uninstall packages
+    yum:
+      name: haproxy
+      state: absent
+    when: ansible_pkg_mgr == 'yum'
