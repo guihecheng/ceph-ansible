@@ -16,13 +16,13 @@ dummy:
 #    dev: "eno16777736"
 #    router_id: "51"
 #    master: "192.168.238.134"
-#    slave: "192.168.238.135"
+#    backup: "192.168.238.135"
 #  - vip: "192.168.238.202"
 #    netmask: "24"
 #    dev: "eno16777736"
 #    router_id: "52"
 #    master: "192.168.238.135"
-#    slave: "192.168.238.136"
+#    backup: "192.168.238.136"
 
 #keepalived_virtual_server_groups:
 #  - virtual_servers:
