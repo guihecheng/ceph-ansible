@@ -5,7 +5,7 @@
     - ceph-lvs
 
 #- hosts: haproxys
-#  become: Tree
+#  become: True
 #  roles:
 #    - ceph-haproxy
 
