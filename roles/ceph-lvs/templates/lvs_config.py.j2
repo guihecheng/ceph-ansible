@@ -1,0 +1,35 @@
+#!/usr/bin/env python
+# {{ ansible_managed }}
+
+import json
+import socket
+import fileinput
+
+config_file = "/etc/init.d/lvs_realserver.sh"
+lvs_vips_file = "/tmp/lvs_vips"
+
+lvs_vips = []
+
+with open(lvs_vips_file) as f:
+    lvs_vips = json.load(f)
+
+myip = socket.gethostbyname(socket.gethostname())
+myvips_str = " "
+
+def replace_vips_str():
+    with open(config_file) as f:
+        new_text = f.read().replace("@MYVIPS@", myvips_str)
+    with open(config_file, "w") as f:
+        f.write(new_text)
+
+def main():
+    global myvips_str
+    for item in lvs_vips:
+        if item['assign_to'] == myip:
+            for vip in item['vips']:
+                myvips_str += (vip + " ")
+
+    replace_vips_str()
+
+if __name__ == '__main__':
+    main()

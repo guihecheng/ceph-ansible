@@ -9,11 +9,7 @@
   when:
     - ansible_os_family == 'RedHat'
 
-- name: get lvs_vips_str
-  set_fact:
-    lvs_vips_str: "{{ lvs_vips | join(' ') }}"
-
-- name: generate lvs run script
+- name: init base lvs run script
   become: true
   template:
     src: "{{ role_path }}/templates/lvs_realserver.sh.j2"
@@ -21,6 +17,24 @@
     owner: "root"
     group: "root"
     mode: "0744"
+
+- name: export lvs_vips to file
+  copy:
+    content: "{{ lvs_vips }}"
+    dest: /tmp/lvs_vips
+
+- name: generate config script
+  become: true
+  template:
+    src: "{{ role_path }}/templates/lvs_config.py.j2"
+    dest: "/etc/init.d/lvs_config.py"
+    owner: "root"
+    group: "root"
+    mode: "0744"
+
+- name: generate lvs_realserver.sh by config script
+  become: true
+  command: "python /etc/init.d/lvs_config.py"
 
 - name: generate lvs systemd unit file
   become: true
