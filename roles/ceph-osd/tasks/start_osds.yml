@@ -28,12 +28,24 @@
   set_fact:
     docker_exec_start_osd: "{{ 'docker run --rm --privileged=true -v /run/lvm/lvmetad.socket:/run/lvm/lvmetad.socket -v /etc/ceph:/etc/ceph:z -v /dev:/dev --entrypoint=ceph-volume ' + ceph_docker_registry + '/' + ceph_docker_image + ':' + ceph_docker_image_tag if containerized_deployment else 'ceph-volume' }}"
 
-- name: collect osd ids
+- name: collect osd ids lvm
   shell: >
     {{ docker_exec_start_osd }} lvm list --format json
   changed_when: false
   failed_when: false
   register: ceph_osd_ids
+  when:
+    - osd_scenario == 'lvm' 
+
+- name: collect osd ids disk 
+  shell: |
+    ls /var/lib/ceph/osd/ | sed 's/.*-//'
+  changed_when: false
+  failed_when: false
+  register: ceph_osd_ids
+  until: ceph_osd_ids.stdout_lines|length == devices|unique|length
+  when:
+    - osd_scenario != 'lvm' 
 
 - name: generate systemd unit file
   become: true
@@ -50,11 +62,11 @@
 
 - name: systemd start osd
   systemd:
-    name: ceph-osd@{{ item | regex_replace('/dev/', '') if osd_scenario != 'lvm' else item }}
+    name: ceph-osd@{{ item }}
     state: started
     enabled: yes
     daemon_reload: yes
-  with_items: "{{ devices if osd_scenario != 'lvm' else (ceph_osd_ids.stdout | from_json | list) }}"
+  with_items: "{{ (ceph_osd_ids|default({})).stdout_lines|default([]) }}"
 
 - name: ensure systemd service override directory exists
   file:
