@@ -481,10 +481,137 @@ dummy:
 # Example:
 # ceph_conf_overrides:
 #   global:
-#     foo: 1234
-#     bar: 5678
+#     osd_crush_update_on_start : False
+#     osd_crush_chooseleaf_type : 1
+#     osd_pool_default_size : 2
+#     osd_pool_default_min_size : 1
+#     auth_supported : cephx
+#     auth_cluster_required : cephx
+#     auth_service_required : cephx
+#     auth_client_required : cephx
+#     osd_pool_default_pg_num : 512
+#     osd_pool_default_pgp_num : 512
+#     debug_tp : 0
+#     debug_timer : 0
+#     debug_throttle : 0
+#     debug_rgw : 0
+#     debug_rbd : 0
+#     debug_rados : 0
+#     debug_perfcounter : 0
+#     debug_paxos : 0
+#     debug_osd : 0
+#     debug_optracker : 0
+#     debug_objecter : 0
+#     debug_objectcacher : 0
+#     debug_objclass : 0
+#     debug_ms : 0
+#     debug_monc : 0
+#     debug_mon : 0
+#     debug_mds_migrator : 0
+#     debug_mds_log_expire : 0
+#     debug_mds_log : 0
+#     debug_mds_locker : 0
+#     debug_mds_balancer : 0
+#     debug_mds : 0
+#     debug_lockdep : 0
+#     debug_journaler : 0
+#     debug_journal : 0
+#     debug_hadoop : 0
+#     debug_finisher : 0
+#     debug_filestore : 0
+#     debug_filer : 0
+#     debug_crush : 0
+#     debug_context : 0
+#     debug_client : 0
+#     debug_civetweb : 0
+#     debug_buffer : 0
+#     debug_auth : 0
+#     debug_asok : 0
+#     debug_rocksdb: 0
+#     debug_eventtrace: 0
+#     debug_heartbeatmap: 0
+#     debug_none: 0
+#     debug_mgr: 0
+#     debug_mgrc: 0
+#     debug_memdb: 0
+#     debug_crypto: 0
+#     debug_kinetic: 0
+#     debug_kstore: 0
+#     debug_leveldb: 0
+#   client:
+#     rgw_cache_lru_size : 10000
+#     rgw_md_log_max_shards : 64
+#     rgw_data_log_num_shards : 64
+#     rgw_enable_ops_log : False
+#     rgw_enable_usage_log : True
+#     rgw_gc_max_objs : 128
+#     rgw_gc_obj_min_wait : 7200
+#     rgw_gc_processor_max_time : 3600
+#     rgw_gc_processor_period : 3600
+#     rgw_op_thread_timeout : 600
+#     rgw_thread_pool_size : 500
+#     rgw_usage_max_shards : 64
+#     rgw_usage_max_user_shards : 1
+#     rgw_user_quota_sync_interval : 1800
+#     rgw_user_quota_sync_wait_time : 1800
+#     rgw_cache_enabled : True
+#     rgw_num_rados_handles : 4
+#     rgw_override_bucket_index_max_shards : 64
+#     rgw_max_chunk_size : 4194304
+#     rgw_enable_usage_log : True
+#     rgw_user_quota_sync_interval : 1800
+#     rgw_user_quota_sync_wait_time : 1800
+#     rgw_multipart_min_part_size : 4194304
+#     rgw_enable_apis: "s3, s3website, swift, swift_auth, admin"
+#     rgw_dynamic_resharding: false
+#   osd:
+#     public_addr : "{{ ansible_bond_prod['ipv4']['address'] }}"
+#     cluster_addr : "{{ ansible_bond_prod['ipv4']['address'] }}"
+#     osd_pool_erasure_code_stripe_width : 65535
+#     filestore_fd_cache_size : 16384
+#     filestore_max_sync_interval : 5
+#     filestore_min_sync_interval : 0.01
+#     filestore_omap_header_cache_size : 16384
+#     filestore_op_threads : 4
+#     filestore_queue_max_bytes : 1073741824
+#     filestore_queue_max_ops : 5000
+#     journal_max_write_bytes : 1073741824
+#     journal_max_write_entries : 5000
+#     max_open_files : 0
+#     osd_client_message_cap : 100
+#     osd_client_message_size_cap : 1073741824
+#     osd_client_op_priority : 63
+#     osd_deep_scrub_interval : 2419200
+#     osd_deep_scrub_stride : 524288
+#     osd_heartbeat_grace : 20
+#     osd_heartbeat_interval : 6
+#     osd_heartbeat_min_peers : 10
+#     osd_mon_heartbeat_interval : 30
+#     osd_op_complaint_time : 5
+#     osd_op_threads : 3
+#     osd_op_thread_timeout : 60
+#     osd_scrub_begin_hour : 1
+#     osd_scrub_chunk_max : 25
+#     osd_scrub_chunk_min : 5
+#     osd_scrub_end_hour : 5
+#     osd_scrub_load_threshold : 0.5
+#     osd_scrub_max_interval : 604800
+#     osd_scrub_min_interval : 86400
+#     osd_recovery_threads : 1
+#     osd_recovery_op_priority : 3
+#     osd_recovery_max_single_start : 1
+#     osd_recovery_max_chunk : 4194304
+#     osd_recovery_max_active : 3
+#   mon:
+#     mon_osd_nearfull_ratio : 0.85
+#     mon_osd_full_ratio : 0.95
+#     mon_osd_down_out_interval : 43200
+#     mon_clock_drift_allowed : 0.15
+#     mon_osd_adjust_heartbeat_grace : False
+#     mon_osd_adjust_down_out_interval : False
 #
 #ceph_conf_overrides: {}
+
 
 
 #############
