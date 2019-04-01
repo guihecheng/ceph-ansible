@@ -85,7 +85,7 @@ def config_virtual_server(fhandle, seq, real_servers):
 def main():
     global myinstances, mygroups
     for inst in vrrp_instances:
-        if inst['master'] == myip or inst['backup'] == myip:
+        if inst['master'] == myip or myip in inst['backups']:
             myinstances.append(inst)
     
     for group in virtual_server_groups:
