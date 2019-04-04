@@ -1,0 +1,8 @@
+---
+# You can override vars by using host or group vars
+
+###########
+# GENERAL #
+###########
+
+haproxy_frontend_port: 80
