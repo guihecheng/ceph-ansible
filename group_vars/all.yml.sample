@@ -609,6 +609,8 @@ dummy:
 #     mon_clock_drift_allowed : 0.15
 #     mon_osd_adjust_heartbeat_grace : False
 #     mon_osd_adjust_down_out_interval : False
+#   mgr:
+#     public_addr : "{{ ansible_bond_prod['ipv4']['address'] }}"
 #
 #ceph_conf_overrides: {}
 
